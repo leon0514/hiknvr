@@ -160,6 +160,7 @@ bool HikNvrCap::Capture(int channel, std::vector<char>& out_buffer) const {
     // 某些旧版SDK可能不返回需要的 dwReturnedSize，这里做防御性扩容
     if (!bRet && NET_DVR_GetLastError() == NET_DVR_DEV_NET_OVERFLOW) {
         // 扩容策略：如果SDK返回了需要的大小，用它；否则直接扩充到 2MB 或 4MB
+        std::cout << "Returned Size: " << dwReturnedSize << ", Current Size: " << out_buffer.size() << std::endl;
         size_t new_size = (dwReturnedSize > out_buffer.size()) ? dwReturnedSize : (2 * 1024 * 1024); // 最小扩到2MB
         out_buffer.resize(new_size);
 
