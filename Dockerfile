@@ -7,8 +7,7 @@ WORKDIR /app
 
 # ★★★ 新增：修改 APT 镜像源为清华大学源 ★★★
 # 备份并替换为新的软件源，以提高国内网络环境下的下载速度
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list && \
-    sed -i 's/security.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources
 
 # 1. 安装依赖 (这一层基本不会变)
 # 现在会从新的镜像源下载，速度更快
