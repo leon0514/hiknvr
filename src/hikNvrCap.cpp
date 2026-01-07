@@ -176,7 +176,7 @@ bool HikNvrCap::Capture(int channel, std::vector<char>& out_buffer) const {
 
     if (!bRet) {
         // 抓取失败，建议打印日志但不一定抛出异常
-        // std::cerr << "Capture failed Ch" << channel << " Err:" << NET_DVR_GetLastError() << std::endl;
+        std::cerr << "Capture failed Ch" << channel << " Err:" << NET_DVR_GetLastError() << std::endl;
         return false;
     }
 
