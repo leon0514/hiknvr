@@ -5,7 +5,13 @@ FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
+# ★★★ 新增：修改 APT 镜像源为清华大学源 ★★★
+# 备份并替换为新的软件源，以提高国内网络环境下的下载速度
+RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+
 # 1. 安装依赖 (这一层基本不会变)
+# 现在会从新的镜像源下载，速度更快
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -18,17 +24,11 @@ COPY ./sdk/hikvision /opt/hikvision
 # 2. ★★★ 关键改动 (第一部分) ★★★
 # 先只复制 CMakeLists.txt，它决定了项目的结构
 COPY ./CMakeLists.txt ./CMakeLists.txt
-
-# 4. ★★★ 关键改动 (第二部分) ★★★
-# 现在再复制最常变动的源代码
 COPY ./src ./src
 
-# 3. 运行 CMake 配置步骤。
-# 这一步现在只依赖 CMakeLists.txt。只要你不修改它，这一层就会被缓存！
 RUN cmake -B build -S . \
     -DCMAKE_BUILD_TYPE=Release \
     -Dpybind11_DIR=$(python3 -c "import pybind11; print(pybind11.get_cmake_dir())")
-
 
 
 # 5. 运行编译步骤。
