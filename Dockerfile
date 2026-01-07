@@ -59,7 +59,7 @@ COPY --from=builder /opt/hikvision/hik_libs /opt/hikvision/hik_libs
 RUN echo /opt/hikvision/hik_libs > /etc/ld.so.conf.d/hikvision.conf && ldconfig
 
 # 4. 拷贝 FastAPI 服务脚本
-COPY ./workspace/* ./
+COPY ./workspace/*.py ./
 
 # 暴露 FastAPI 服务端口
 EXPOSE 3000
