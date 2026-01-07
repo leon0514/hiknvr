@@ -5,37 +5,38 @@ FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
-# 安装编译所需的系统依赖
+# 1. 安装依赖 (这一层基本不会变)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     && rm -rf /var/lib/apt/lists/*
-
-# 安装 pybind11 作为编译时依赖
 RUN pip install --no-cache-dir pybind11
 
 # --- 准备编译环境 ---
-
-# 拷贝海康 SDK 到镜像中的标准位置
 COPY ./sdk/hikvision /opt/hikvision
 
-# 拷贝 C++ 源代码和 CMakeLists.txt
-COPY ./src ./src
+# 2. ★★★ 关键改动 (第一部分) ★★★
+# 先只复制 CMakeLists.txt，它决定了项目的结构
 COPY ./CMakeLists.txt ./CMakeLists.txt
 
-# --- 执行 CMake 编译 ---
+# 4. ★★★ 关键改动 (第二部分) ★★★
+# 现在再复制最常变动的源代码
+COPY ./src ./src
 
-# 1. 配置项目 (在 build 目录下)
-#    ★★★ 关键修改 ★★★
-#    我们使用 python -c '...' 来执行一小段 Python 代码，
-#    调用 pybind11.get_cmake_dir() 来获取其 CMake 配置文件的路径，
-#    然后通过 -Dpybind11_DIR=... 将这个路径传递给 CMake。
+# 3. 运行 CMake 配置步骤。
+# 这一步现在只依赖 CMakeLists.txt。只要你不修改它，这一层就会被缓存！
 RUN cmake -B build -S . \
     -DCMAKE_BUILD_TYPE=Release \
     -Dpybind11_DIR=$(python3 -c "import pybind11; print(pybind11.get_cmake_dir())")
 
-# 2. 编译项目 ( --parallel 使用所有可用核心加速编译 )
+
+
+# 5. 运行编译步骤。
+# 这一步依赖于源代码。当你修改了 src/ 目录下的任何文件，
+# COPY ./src ./src 这一层会失效，从而触发下面的重新编译。
+# 但上面的 CMake 配置步骤依然会使用缓存，为你节省时间！
 RUN cmake --build build --config Release --parallel
+
 
 # =================================================================
 # Stage 2: Runtime Environment
