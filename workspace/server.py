@@ -18,7 +18,7 @@ NVR_CONFIG = {
 }
 
 
-CACHE_TTL = 0.5
+CACHE_TTL = 1
 # =========================================
 
 class NVRController:
@@ -92,12 +92,10 @@ class NVRController:
         with self.channel_locks[channel_id]:
             current_time = time.time()
             
-            # 2. 如果不强制刷新，则检查缓存
-            if not force_iframe:
-                if channel_id in self.image_cache:
-                    ts, data = self.image_cache[channel_id]
-                    if current_time - ts < CACHE_TTL:
-                        return data
+            if channel_id in self.image_cache:
+                ts, data = self.image_cache[channel_id]
+                if current_time - ts < CACHE_TTL:
+                    return data
             
             # 3. 缓存失效 或 需要强制刷新，执行抓图
             # print(f"[Capture] Channel {channel_id}, Force Refresh: {force_iframe}")
