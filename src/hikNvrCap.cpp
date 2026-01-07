@@ -137,10 +137,7 @@ bool HikNvrCap::Capture(int channel, std::vector<char>& out_buffer) const {
 
     DWORD dwReturnedSize = 0;
     
-    // 策略：预分配初始大小。通常1080P JPEG约300KB-800KB。
-    // 如果传入的 buffer 已经很大，则不缩小，利用 vector 的 capacity 特性。
-    // reserve 不会改变 size()，我们需要 resize() 告诉 SDK 实际可用空间。
-    const size_t INITIAL_SIZE = 512 * 1024; // 512KB
+    const size_t INITIAL_SIZE = 1024 * 1024; // 1MB
     if (out_buffer.size() < INITIAL_SIZE) {
         out_buffer.resize(INITIAL_SIZE); 
     }
@@ -158,10 +155,8 @@ bool HikNvrCap::Capture(int channel, std::vector<char>& out_buffer) const {
 
     // 检查是否缓冲区过小 (SDK错误号 43: NET_DVR_BUFFER_OVERFLOW)
     // 某些旧版SDK可能不返回需要的 dwReturnedSize，这里做防御性扩容
-    if (!bRet && NET_DVR_GetLastError() == NET_DVR_DEV_NET_OVERFLOW) {
-        // 扩容策略：如果SDK返回了需要的大小，用它；否则直接扩充到 2MB 或 4MB
-        std::cout << "Returned Size: " << dwReturnedSize << ", Current Size: " << out_buffer.size() << std::endl;
-        size_t new_size = (dwReturnedSize > out_buffer.size()) ? dwReturnedSize : (2 * 1024 * 1024); // 最小扩到2MB
+    while (!bRet && NET_DVR_GetLastError() == NET_DVR_NOENOUGH_BUF) {
+        size_t new_size = (dwReturnedSize > out_buffer.size()) ? dwReturnedSize : (out_buffer.size() * 2); // 最小扩到2MB
         out_buffer.resize(new_size);
 
         // 重试
